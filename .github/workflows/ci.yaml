@@ -33,3 +33,8 @@ jobs:
         with:
           name: better-trading-chrome
           path: ${{ github.workspace }}/dist-packages/chrome.zip
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: better-trading-firefox
+          path: ${{ github.workspace }}/dist-packages/firefox.zip
