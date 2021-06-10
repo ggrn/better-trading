@@ -1,0 +1,63 @@
+name: release
+
+on: 
+  push:
+    tags:
+      - v1.*
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    env:
+      JOBS: 1 # See https://git.io/vdao3 for details
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 10.15
+
+      - uses: actions/cache@v2
+        id: npm-cache
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - run: make dependencies
+      - run: make verify
+      - run: make test
+
+      - run: make package
+
+      - id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      
+      - id: upload-release-asset-chrome
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_name: better-trading-chrome.zip
+          asset_path: ${{ github.workspace }}/dist-packages/chrome.zip
+          asset_content_type: application/zip
+
+      - id: upload-release-asset-firefox
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_name: better-trading-firefox.zip
+          asset_path: ${{ github.workspace }}/dist-packages/firefox.zip
+          asset_content_type: application/zip
